@@ -68,7 +68,7 @@ class XProtocol(object):
         self.serial.close()
 
     def command(self, cmd):
-        self.serial.write('%s\n' % cmd)
+        self.serial.write(('%s\n' % cmd).encode("ascii"))
         lines = []
         chars = []
         while True:

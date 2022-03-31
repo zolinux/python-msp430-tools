@@ -9,6 +9,7 @@
 Simple MSP430 BSL implementation using the serial port.
 """
 
+import imp
 import sys
 from msp430.bsl import bsl
 import serial
@@ -16,6 +17,7 @@ import struct
 import logging
 import time
 import pkgutil
+import binascii
 from io import BytesIO
 
 from optparse import OptionGroup
@@ -141,9 +143,10 @@ class SerialBSL(bsl.BSL):
         """
         # first synchronize with slave
         self.sync()
-        self.logger.debug('Command 0x{:02x} {}'.format(cmd, message.encode('hex')))
+        msgBytes = message if isinstance(message,(bytes, bytearray)) else message.encode("ascii")
+        self.logger.debug('Command 0x{:02x} {}'.format(cmd, str(binascii.hexlify(msgBytes))))
         # prepare command with checksum
-        txdata = struct.pack('<cBBB', bsl.DATA_FRAME, cmd, len(message), len(message)) + message
+        txdata = struct.pack('<cBBB', bsl.DATA_FRAME, cmd, len(message), len(message)) + msgBytes
         txdata += struct.pack('<H', self.checksum(txdata) ^ 0xffff)   # append checksum
         #~ self.logger.debug('Sending command: %r' % (txdata,))
         # transmit command
@@ -196,7 +199,7 @@ class SerialBSL(bsl.BSL):
             if self.checksum(ans + head + data) ^ 0xffff == struct.unpack("<H", checksum)[0]:
                 if expect is not None and len(data) != expect:
                     raise bsl.BSLError('expected {} bytes, got {} bytes'.format(expect, len(data)))
-                self.logger.debug('Data frame: {}'.format(data.encode('hex')))
+                self.logger.debug('Data frame: {}'.format(str(binascii.hexlify(data))))
                 return data
             else:
                 raise bsl.BSLError('checksum error in answer')
@@ -428,14 +431,14 @@ class SerialBSLTarget(SerialBSL, msp430.target.Target):
             self.extra_timeout = 6
             self.mass_erase()
             self.extra_timeout = None
-            self.BSL_TXPWORD('\xff' * 32)
+            self.BSL_TXPWORD(b'\xff' * 32)
             # remove mass_erase from action list so that it is not done
             # twice
             self.remove_action(self.mass_erase)
         else:
             if self.options.password is not None:
                 password = msp430.memory.load(self.options.password).get_range(0xffe0, 0xffff)
-                self.logger.info('Transmitting password: {}'.format(password.encode('hex')))
+                self.logger.info('Transmitting password: {}'.format(binascii.hexlify(password.encode('ascii'))))
                 self.BSL_TXPWORD(password)
 
         # check for extended features (e.g. >64kB support)

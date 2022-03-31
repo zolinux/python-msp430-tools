@@ -16,11 +16,11 @@ port access).
 import struct
 
 # possible answers
-BSL_SYNC = '\x80'
-CMD_FAILED = '\x70'
-DATA_FRAME = '\x80'
-DATA_ACK = '\x90'
-DATA_NAK = '\xA0'
+BSL_SYNC = b'\x80'
+CMD_FAILED = b'\x70'
+DATA_FRAME = b'\x80'
+DATA_ACK = b'\x90'
+DATA_NAK = b'\xA0'
 
 # commands for the MSP430 target
 BSL_TXPWORD = 0x10    # Receive password to unlock commands
@@ -189,7 +189,7 @@ class BSL(object):
         """
         # try a write to the watchdog
         try:
-            self.BSL_TXBLK(0x0120, "\x08\x5a")
+            self.BSL_TXBLK(0x0120, b"\x08\x5a")
         except BSLError:
             # we can't verify the success of the reset...
             pass
@@ -207,4 +207,4 @@ class DummyBSL(BSL):
 
 if __name__ == '__main__':
     dummy = DummyBSL()
-    dummy.BSL_TXPWORD('\xff' * 32)
+    dummy.BSL_TXPWORD(b'\xff' * 32)
