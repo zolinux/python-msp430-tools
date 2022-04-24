@@ -257,7 +257,7 @@ class Target(object):
             data = segment.data
             # pad length if odd number of bytes
             if len(data) & 1:
-                data += '\xff'
+                data += b'\xff'
             self.memory_write(segment.startaddress, data)
         if self.verbose and not quiet:
             sys.stderr.write('Programming: OK\n')
